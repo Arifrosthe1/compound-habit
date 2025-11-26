@@ -1,24 +1,31 @@
 # Compounding Habits
 
-> Turn small daily changes into massive long-term results.
+Turn small daily changes into significant long-term progress.
 
-A small client-side web app to help you track habit goals that compound over time. This repository contains a lightweight HTML/CSS/JS prototype that demonstrates compounding progress, per-goal history, and projected progress using a simple daily "interest rate".
+Compounding Habits is a small client-side web prototype that helps you track goals which change incrementally each day (for example: weight, reading pages, push-ups). It supports both growth (increase) and reduction (decrease) goals and shows projected progress using a repeatable daily "rate".
 
-**Status:** In development — contributions welcome! Help grow this project together.
+Key ideas:
+- Treat daily improvements like a small interest rate that compounds over time.
+- Visualize both your actual logged values and the expected projection.
+- Tune rate and projection behavior before committing to a goal.
 
 ---
 
+**Status:** Prototype / experimental — contributions are welcome.
+
 ## Features
 
-- Create habit goals (increase or decrease a measured value).
-- Per-goal current value, start and target values, and daily compounding rate.
-- Log daily actual values or apply the daily compound step manually.
-- Interactive modal with projected expected progress vs actual history (Chart.js).
-- Edit, delete, and reset goals.
+- Create goals for values that should increase or decrease.
+- Per-goal fields: start, current, target, unit, daily rate (percent), optional ramp exponent for decrease behavior.
+- Log real daily values or apply the app's computed daily step.
+- Edit, delete, or reset goals.
+- Interactive Info modal with a Chart.js visualization comparing actual history and expected projection.
+- Live projection preview in the Add/Edit modal (mini sparkline and estimated reach date).
+- Persists data locally in the browser (localStorage key: `compoundingHabits`).
 
 ## Quick start
 
-No build step required — this is a static client-side app.
+No build step or external tooling required — this is a static HTML/CSS/JS app.
 
 1. Clone the repo:
 
@@ -27,40 +34,48 @@ git clone https://github.com/Arifrosthe1/compound-habit.git
 cd compound-habit
 ```
 
-2. Open `index.html` in your browser (double-click) or serve with a simple static server. For example, using Python:
+2. Open the app:
+
+- Option A — open `index.html` directly in your browser (double-click the file).
+- Option B — run a simple local server (recommended to avoid any restrictions with local resources):
 
 ```powershell
-# for Python 3.x
+# Python 3
 python -m http.server 8000
 # then open http://localhost:8000 in your browser
 ```
 
-3. Add goals, log values, and click **Info** on a goal to view the expected vs actual progress chart.
+3. Use the UI to add goals, log values, and click **Info** on a goal to view projections and history.
 
-## Files
+## How the projections work (short)
 
-- `index.html` — app UI and templates
-- `style.css` — styling
-- `app.js` — application logic, localStorage persistence, and Chart.js integration
+- For increase-type goals the app applies a multiplicative daily rate to compute the next expected value.
+- For decrease-type goals the app can use a configurable ramp curve (default: power curve) so the absolute step is smallest at the beginning and grows as you approach the target — this helps model habits like gradually reducing a metric.
+- The same compounding logic is used for the charts and the "Apply compound" action, ensuring consistency between projection and action.
+
+## Files in this repo
+
+- `index.html` — user interface and modal templates
+- `style.css` — app styling and responsive layout
+- `app.js` — core logic, persistence, and Chart.js integration
+
+## Troubleshooting
+
+- Blank charts or missing behavior: ensure Chart.js is loaded before `app.js` and try serving the app over HTTP (see Quick start Option B).
+- If data appears missing, check your browser's `localStorage` for the key `compoundingHabits`.
 
 ## Contributing
 
-This project is in active development and contributions are very welcome. Ways to contribute:
+Contributions and suggestions are welcome:
 
-- Open issues for bugs, ideas, or feature requests.
-- Fork the repo, create a feature branch, and open a pull request.
-- Improve documentation, add tests, or propose UX improvements.
-
-Please be respectful and follow common open-source community standards. If you'd like, open an issue first to discuss larger changes.
-
-## Security & privacy notes
-
-- This project is client-side only and does not store secrets or remote credentials in the repository.
-- Before publishing, ensure you don't commit any API keys, passwords, or private data.
-- If you're going to deploy this with a backend, never hard-code secrets — use environment variables or a secrets manager.
+- File issues for bugs or feature ideas.
+- Open pull requests against `main` with clear descriptions and minimal, focused changes.
+- If you plan a large change, open an issue first to discuss design and scope.
 
 ## License
 
 This project is licensed under the MIT License — see the `LICENSE` file for details.
+
+
 
 
