@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoModal = document.getElementById('info-modal');
     const infoCloseBtn = document.getElementById('info-close');
     const infoTitle = document.getElementById('info-title');
+    const infoSubtitle = document.getElementById('info-subtitle');
     const graphCanvas = document.getElementById('goal-graph');
-    const graphStats = document.getElementById('graph-stats');
     const infoProgressEl = document.getElementById('info-progress');
     const infoDaysleftEl = document.getElementById('info-daysleft');
     const motivationalEl = document.getElementById('motivational');
@@ -346,143 +346,157 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openInfoModal(goal) {
-        infoTitle.textContent = `${goal.name} — Progress`;
-        // ensure history exists
-        goal.history = (goal.history || []).slice();
-        // if no history, seed with start/current
-        if (goal.history.length === 0) {
-            goal.history.push({ date: new Date().toISOString(), value: parseFloat(goal.startValue) });
-        }
+            infoTitle.textContent = `${goal.name} — Progress`;
+            if (infoSubtitle) infoSubtitle.textContent = `Your progress chart and detailed stats.`;
 
-        // sort history by date ascending
-        goal.history.sort((a, b) => new Date(a.date) - new Date(b.date));
+            // --- DOM element references ---
+            const infoStreakEl = document.getElementById('info-streak');
+            const infoCompletionDateEl = document.getElementById('info-completion-date');
+            const motivationalTextEl = document.getElementById('motivational-text');
 
-        // Build expected series for next up to 180 days or until target (with dates)
-        const expected = buildExpectedSeriesWithDates(goal, 180);
-
-        // Build labels: history dates followed by expected dates, skipping duplicates
-        const labels = [];
-        const pushLabel = (iso) => {
-            const d = new Date(iso);
-            const label = d.toLocaleDateString();
-            if (!labels.includes(label)) labels.push(label);
-            return label;
-        };
-
-        goal.history.forEach(h => pushLabel(h.date));
-        expected.forEach(e => pushLabel(e.date));
-
-        // Build dataset arrays aligned with labels
-        const actualData = labels.map(label => {
-            const found = goal.history.find(h => new Date(h.date).toLocaleDateString() === label);
-            return found ? { x: label, y: found.value } : { x: label, y: null };
-        });
-        const expectedData = labels.map(label => {
-            const found = expected.find(h => new Date(h.date).toLocaleDateString() === label);
-            return found ? { x: label, y: found.value } : { x: label, y: null };
-        });
-
-        // Compute overall progress percent and days remaining for display
-        let progressPct = 0;
-        try {
-            if (goal.type === 'increase') {
-                const denom = goal.targetValue - goal.startValue;
-                if (denom !== 0) progressPct = ((goal.currentValue - goal.startValue) / denom) * 100;
-            } else {
-                const denom = goal.startValue - goal.targetValue;
-                if (denom !== 0) progressPct = ((goal.startValue - goal.currentValue) / denom) * 100;
+            // --- Data calculation ---
+            goal.history = (goal.history || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+            if (goal.history.length === 0) {
+                goal.history.push({ date: new Date().toISOString(), value: parseFloat(goal.startValue) });
             }
-        } catch (e) { progressPct = 0; }
-        if (!isFinite(progressPct)) progressPct = 0; progressPct = Math.max(0, Math.min(100, progressPct));
 
-        // Find target index in labels (last expected date label)
-        const targetLabel = expected.length ? new Date(expected[expected.length - 1].date).toLocaleDateString() : null;
-        const targetIndex = targetLabel ? labels.indexOf(targetLabel) : -1;
+            const expected = buildExpectedSeriesWithDates(goal, 3650);
 
-        // Destroy existing chart if present
-        if (chartInstance) {
-            chartInstance.destroy();
-            chartInstance = null;
-        }
+            let progressPct = 0;
+            try {
+                if (goal.type === 'increase') {
+                    progressPct = ((goal.currentValue - goal.startValue) / (goal.targetValue - goal.startValue)) * 100;
+                } else {
+                    progressPct = ((goal.startValue - goal.currentValue) / (goal.startValue - goal.targetValue)) * 100;
+                }
+            } catch (e) { progressPct = 0; }
+            progressPct = Math.max(0, Math.min(100, isFinite(progressPct) ? progressPct : 0));
 
-        // Show modal first so Chart.js can correctly compute sizes
-        infoModal.style.display = 'flex';
+            const daysRemaining = expected.length > 0 ? expected.length : 0;
+            const completionDate = new Date();
+            completionDate.setDate(completionDate.getDate() + daysRemaining);
 
-        // Create new Chart.js chart
-        const ctx = graphCanvas.getContext('2d');
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Actual',
-                        data: actualData.map(p => p.y),
-                        borderColor: '#ff7f0e',
-                        backgroundColor: 'rgba(255,127,14,0.1)',
-                        spanGaps: true,
-                        tension: 0.25,
-                        pointRadius: 4,
-                    },
-                    {
-                        label: 'Expected',
-                        data: expectedData.map(p => p.y),
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0,123,255,0.12)',
-                        fill: true,
-                        borderDash: [6,4],
-                        spanGaps: true,
-                        tension: 0.25,
-                        pointRadius: 0,
-                    },
-                    {
-                        label: 'Target',
-                        data: labels.map((l, i) => (i === targetIndex ? (expected.length ? expected[expected.length - 1].value : null) : null)),
-                        showLine: false,
-                        pointStyle: 'rectRot',
-                        pointRadius: targetIndex >= 0 ? 7 : 0,
-                        backgroundColor: '#28a745',
-                        borderColor: '#28a745',
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    tooltip: { enabled: true, mode: 'index' }
-                },
-                scales: {
-                    x: { display: true, title: { display: true, text: 'Date' } },
-                    y: { display: true, title: { display: true, text: goal.unit || '' } }
+            // --- Streak calculation (simple version) ---
+            let streak = 0;
+            if (goal.history.length > 1) {
+                streak = goal.history.length; // Placeholder: counts number of logs
+            }
+
+            // --- Update UI elements ---
+            if (infoProgressEl) infoProgressEl.textContent = `${Math.round(progressPct)}%`;
+            if (infoDaysleftEl) infoDaysleftEl.textContent = daysRemaining > 0 ? `${daysRemaining}` : '--';
+            if (infoStreakEl) infoStreakEl.textContent = `${streak} days`;
+            if (infoCompletionDateEl) infoCompletionDateEl.textContent = daysRemaining > 0 ? completionDate.toLocaleDateString() : 'Reached';
+
+            if (motivationalEl) {
+                motivationalEl.style.display = 'flex';
+                if (progressPct >= 100) {
+                    motivationalTextEl.textContent = `Amazing — you've reached your target! 🎉`;
+                } else if (progressPct >= 75) {
+                    motivationalTextEl.textContent = `You're almost there! Keep up the great work.`;
+                } else if (progressPct >= 40) {
+                    motivationalTextEl.textContent = `Great progress. Steady effort compounds quickly.`;
+                } else {
+                    motivationalTextEl.textContent = `Small steps daily lead to big results. Keep going!`;
                 }
             }
-        });
 
-        // Force a resize/update in case the canvas was not measured correctly
-        try { chartInstance.resize(); chartInstance.update(); } catch (e) { /* ignore */ }
+            // --- Chart setup ---
+            const labels = [];
+            const pushLabel = (iso) => {
+                const label = new Date(iso).toLocaleDateString();
+                if (!labels.includes(label)) labels.push(label);
+            };
+            goal.history.forEach(h => pushLabel(h.date));
+            expected.forEach(e => pushLabel(e.date));
 
-        // Stats & motivating UI
-        const last = goal.history[goal.history.length - 1];
-        const expectedFinal = expected.length ? expected[expected.length - 1].value : 'N/A';
-        graphStats.innerHTML = `Last logged: ${last ? new Date(last.date).toLocaleString() : 'N/A'} — Expected in ${expected.length} days: ${typeof expectedFinal === 'number' ? expectedFinal.toFixed(2) + ' ' + goal.unit : expectedFinal}`;
-        infoProgressEl.textContent = `${Math.round(progressPct)}% complete`;
-        infoDaysleftEl.textContent = expected.length ? `${expected.length} days to target` : '';
-        motivationalEl.style.display = 'block';
-        if (progressPct >= 100) {
-            motivationalEl.textContent = `Amazing — you've reached your target! 🎉`;
-        } else if (progressPct >= 75) {
-            motivationalEl.textContent = `You're almost there — keep this up and you'll hit your target soon!`;
-        } else if (progressPct >= 40) {
-            motivationalEl.textContent = `Great progress — steady effort compounds quickly.`;
-        } else {
-            motivationalEl.textContent = `Small steps daily lead to big results — keep going!`;
-        }
+            const actualData = labels.map(label => goal.history.find(h => new Date(h.date).toLocaleDateString() === label)?.value ?? null);
+            const expectedData = labels.map(label => expected.find(e => new Date(e.date).toLocaleDateString() === label)?.value ?? null);
+
+            const targetLabel = expected.length ? new Date(expected[expected.length - 1].date).toLocaleDateString() : null;
+            const targetIndex = targetLabel ? labels.indexOf(targetLabel) : -1;
+
+            // Destroy previous instance safely
+            if (chartInstance) {
+                try { chartInstance.destroy(); } catch (e) { /* ignore */ }
+                chartInstance = null;
+            }
+
+            // Show modal before creating chart so Chart.js can measure canvas
+            infoModal.style.display = 'flex';
+
+            if (typeof Chart === 'undefined') {
+                console.warn('Chart.js not available; cannot render info chart.');
+                return;
+            }
+
+            try {
+                // Theme-aware colors
+                const css = getComputedStyle(document.documentElement);
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const fg = (css.getPropertyValue('--font-color') || (isDark ? '#e9ecef' : '#212529')).trim();
+                const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)';
+                const actualColor = '#ff7f0e';
+                const expectedColor = '#4dabf7';
+                const targetColor = '#28a745';
+
+                chartInstance = new Chart(graphCanvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Actual',
+                                data: actualData,
+                                borderColor: actualColor,
+                                backgroundColor: 'rgba(255,127,14,0.12)',
+                                spanGaps: true, tension: 0.25, pointRadius: 4,
+                            },
+                            {
+                                label: 'Expected',
+                                data: expectedData,
+                                borderColor: expectedColor,
+                                backgroundColor: 'rgba(77,171,247,0.12)',
+                                fill: true, borderDash: [6, 4], spanGaps: true, tension: 0.25, pointRadius: 0,
+                            },
+                            {
+                                label: 'Target',
+                                data: labels.map((_, i) => (i === targetIndex ? goal.targetValue : null)),
+                                showLine: false, pointStyle: 'rectRot', pointRadius: targetIndex >= 0 ? 7 : 0,
+                                backgroundColor: targetColor,
+                                borderColor: targetColor,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { labels: { color: fg, usePointStyle: true } },
+                            tooltip: {
+                                backgroundColor: isDark ? '#222' : '#fff',
+                                titleColor: isDark ? '#fff' : '#000',
+                                bodyColor: isDark ? '#fff' : '#000'
+                            }
+                        },
+                        scales: {
+                            x: { display: true, title: { display: false }, ticks: { color: fg }, grid: { color: gridColor } },
+                            y: { display: true, title: { display: false, text: goal.unit || '' }, ticks: { color: fg }, grid: { color: gridColor } }
+                        }
+                    }
+                });
+
+                // allow layout to settle then force resize/update
+                setTimeout(() => { try { chartInstance.resize(); chartInstance.update(); } catch (e) { /* ignore */ } }, 60);
+            } catch (e) {
+                console.warn('Failed to render info chart', e);
+                try { if (chartInstance) { chartInstance.destroy(); chartInstance = null; } } catch (ee) { }
+            }
     }
 
-    infoCloseBtn.addEventListener('click', () => { infoModal.style.display = 'none'; if (chartInstance) { chartInstance.destroy(); chartInstance = null; } });
-    window.addEventListener('click', (e) => { if (e.target === infoModal) { infoModal.style.display = 'none'; if (chartInstance) { chartInstance.destroy(); chartInstance = null; } } });
+    // Wire info modal close to centralized cleanup
+    if (typeof infoCloseBtn !== 'undefined' && infoCloseBtn) infoCloseBtn.addEventListener('click', hideInfoModal);
+    window.addEventListener('click', (e) => { if (e.target === infoModal) hideInfoModal(); });
 
     function buildExpectedSeriesWithDates(goal, maxDays) {
         const series = [];
@@ -511,6 +525,17 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.style.display = 'none';
         try { if (projectionChart) { projectionChart.destroy(); projectionChart = null; } } catch (e) { }
     };
+
+    // Hide info modal and cleanup
+    function hideInfoModal() {
+        if (infoModal) infoModal.style.display = 'none';
+        try { if (chartInstance) { chartInstance.destroy(); chartInstance = null; } } catch (e) { }
+        try { if (projectionChart) { projectionChart.destroy(); projectionChart = null; } } catch (e) { }
+        if (graphStats) graphStats.textContent = '';
+        if (infoProgressEl) infoProgressEl.textContent = '';
+        if (infoDaysleftEl) infoDaysleftEl.textContent = '';
+        if (motivationalEl) motivationalEl.style.display = 'none';
+    }
 
     // Update live projection in the add/edit modal based on current form inputs
     function updateModalProjection() {
@@ -568,6 +593,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (projectionChart) { projectionChart.destroy(); projectionChart = null; }
             const canvas = document.getElementById('modal-projection-chart');
             if (canvas) {
+                const css = getComputedStyle(document.documentElement);
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const fg = (css.getPropertyValue('--font-color') || (isDark ? '#e9ecef' : '#212529')).trim();
+                const gridColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)';
+                const expectedColor = '#4dabf7';
                 const ctx = canvas.getContext('2d');
                 projectionChart = new Chart(ctx, {
                     type: 'line',
@@ -576,8 +606,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         datasets: [{
                             label: 'Expected',
                             data: data,
-                            borderColor: '#007bff',
-                            backgroundColor: 'rgba(0,123,255,0.12)',
+                            borderColor: expectedColor,
+                            backgroundColor: 'rgba(77,171,247,0.12)',
                             fill: true,
                             tension: 0.3,
                             pointRadius: 0
@@ -587,7 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
-                        scales: { x: { display: false }, y: { display: true } }
+                        scales: { x: { display: false, grid: { color: gridColor } }, y: { display: true, ticks: { color: fg }, grid: { color: gridColor } } }
                     }
                 });
                 try { projectionChart.resize(); projectionChart.update(); } catch (e) {}
@@ -610,6 +640,12 @@ document.addEventListener('DOMContentLoaded', () => {
             hideModal();
         }
     });
+
+    // Info modal close handlers
+    if (typeof infoCloseBtn !== 'undefined' && infoCloseBtn) {
+        infoCloseBtn.addEventListener('click', hideInfoModal);
+    }
+    window.addEventListener('click', (e) => { if (e.target === infoModal) hideInfoModal(); });
 
     // Live projection listeners on modal inputs
     const startInputEl = document.getElementById('start-value');
@@ -664,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const init = () => {
         loadGoals();
         renderGoals();
-        feather.replace();
+        try { if (typeof feather !== 'undefined' && feather.replace) feather.replace(); } catch (e) { /* ignore if feather not available */ }
     };
 
     init();

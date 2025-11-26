@@ -455,69 +455,97 @@ button:active {
     margin-top: 1rem;
 }
 
-/* --- Graph Modal Specifics --- */
-.info-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
+/* --- Info Modal --- */
+.info-modal-header {
+    text-align: center;
     margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.info-header h3 {
+.info-modal-header h3 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.75rem;
 }
 
-.info-progress {
-    font-size: 1.5rem;
+.info-modal-header p {
+    margin: 0.25rem 0 0;
+    color: var(--font-muted-color);
+    font-size: 1rem;
+}
+
+.info-modal-body {
+    padding: 0 1rem;
+}
+
+#info-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.info-stat-item {
+    background-color: var(--bg-color);
+    padding: 1.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.info-stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--font-muted-color);
+    margin-bottom: 0.5rem;
+}
+
+.info-stat-value {
+    display: block;
+    font-size: 1.75rem;
     font-weight: 700;
     color: var(--primary-color);
 }
 
+.info-modal-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+.graph-area {
+    width: 100%;
+    margin: 0 auto;
+}
+
 #goal-graph {
     width: 100%;
-    height: 350px;
-    background: var(--bg-color);
-    border: 1px solid var(--border-color);
+    height: 300px; /* Adjust as needed */
     border-radius: 8px;
 }
 
-.graph-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 1rem;
-    justify-content: center;
-}
-.legend-item {
-    font-size: 0.9rem;
-    color: var(--font-muted-color);
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
-.legend-swatch {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-}
-.legend-swatch.actual {
-    background-color: hsl(var(--orange-hue), 90%, 55%);
-}
-.legend-swatch.expected {
-    background: var(--primary-gradient);
-}
-
 .motivational {
-    margin-top: 1rem;
-    padding: 1rem;
-    background: linear-gradient(45deg, hsla(var(--primary-hue), 100%, 50%, 0.1), hsla(var(--success-hue), 60%, 50%, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0;
+    padding: 1.25rem;
+    background: linear-gradient(45deg, hsla(var(--primary-hue), 100%, 50%, 0.05), hsla(var(--success-hue), 60%, 50%, 0.05));
     border-radius: 8px;
     color: var(--font-muted-color);
     text-align: center;
     font-style: italic;
+    font-size: 1rem;
+}
+
+.motivational[style*="display: flex;"] {
+    display: flex !important;
+}
+
+.motivational i {
+    color: hsl(var(--orange-hue), 90%, 55%);
+    width: 24px;
+    height: 24px;
 }
 
 /* Modal projection preview */
@@ -614,6 +642,203 @@ button:active {
 .empty-state p {
     color: var(--font-muted-color);
     margin-bottom: 0;
+}
+
+/* Mobile responsive adjustments (only affect small screens) */
+@media (max-width: 900px) {
+    body {
+        padding: 1rem;
+    }
+
+    .app-container {
+        display: block;
+    }
+
+    .sidebar {
+        display: none; /* hide sidebar on small screens to preserve desktop layout */
+    }
+
+    .main-content {
+        margin: 0;
+        width: 100%;
+    }
+
+    header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    header h1 { font-size: 1.4rem; }
+    header p { font-size: 0.95rem; }
+
+    #goals-container {
+        grid-template-columns: 1fr; /* single column cards on phones */
+        gap: 1rem;
+    }
+
+    .goal-card {
+        padding: 1rem;
+        border-radius: 10px;
+    }
+
+    /* Mobile: compact goal card improvements */
+    .goal-card .goal-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        font-size: 1.05rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .goal-target {
+        font-size: 0.95rem;
+        color: var(--font-muted-color);
+        margin-bottom: 0.5rem;
+    }
+
+    /* make meta rows tighter and stacked */
+    .goal-meta {
+        grid-template-columns: 1fr;
+        gap: 0.25rem 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .goal-meta div { font-size: 0.9rem; }
+
+    /* highlight rate as a small badge */
+    .goal-rate {
+        display: inline-block;
+        background: linear-gradient(90deg, rgba(0,123,255,0.12), rgba(0,123,255,0.08));
+        color: var(--primary-color);
+        padding: 0.25rem 0.5rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    /* larger progress bar for touch */
+    .progress-container { gap: 0.5rem; }
+    .progress-bar { height: 12px; }
+    .progress-fill { border-radius: 8px; }
+    .progress-label { font-size: 0.9rem; }
+
+    /* Actions: make primary actions full-width but keep a compact action row for secondary actions */
+    .log-section { display: flex; gap: 0.5rem; align-items: center; }
+    .log-input { flex: 1; }
+    .log-section .log-button, .log-section .apply-button { flex: 0 0 auto; }
+
+    .action-row { display: flex; gap: 0.5rem; justify-content: space-between; margin-top: 0.6rem; }
+    .action-row button { flex: 1; padding: 0.6rem; font-size: 0.95rem; }
+
+    /* compact icon buttons if present */
+    .icon-button { width: 44px; height: 44px; padding: 0; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+
+    .goal-streak, .goal-lastlogged { font-size: 0.82rem; color: var(--font-muted-color); }
+
+    /* ensure dropdowns and menus are touch-friendly */
+    .dropdown-content { min-width: 120px; }
+
+    .goal-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .progress-container { gap: 0.5rem; }
+    .progress-bar { height: 12px; }
+    .progress-label { min-width: 34px; font-size: 0.85rem; }
+
+    .log-section {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-top: 0.75rem;
+    }
+
+    .log-input { width: 100%; }
+    .log-section button { width: 100%; }
+
+    .action-row { flex-direction: column; gap: 0.5rem; }
+    .action-row button { width: 100%; }
+
+    .goal-streak, .goal-lastlogged { font-size: 0.8rem; }
+
+    /* Modal adjustments for small screens */
+    .modal-content {
+        width: calc(100% - 2rem);
+        max-width: 100%;
+        padding: 1rem;
+        border-radius: 8px;
+        max-height: 85vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Keep close button reachable on small screens */
+    .modal-content > .close-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 6;
+        background: transparent;
+        padding: 0.5rem;
+        border-radius: 6px;
+    }
+
+    /* Make the form area grow so modal header stays visible */
+    #new-goal-form { flex: 1 1 auto; overflow: visible; }
+
+    /* Make projection area larger and touch-friendly */
+    .modal-projection { padding: 0.75rem; display: block; }
+    .projection-chart-wrap { height: 140px; }
+    #modal-projection-chart { width: 100% !important; height: 140px !important; }
+
+    /* Info modal: sticky header and scrollable body to keep charts visible */
+    .info-modal-header { position: sticky; top: 0; z-index: 6; background: transparent; padding-bottom: 0.5rem; }
+    .info-modal-body { display: block; }
+    .info-modal-body .graph-area { width: 100%; margin-bottom: 1rem; }
+    #goal-graph { width: 100% !important; height: 260px; }
+
+    /* Info stats: grid of small stat cards for touch */
+    #info-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; margin-top: 0.75rem; }
+    #info-stats-grid .info-stat-item { background: var(--bg-offset-color); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 8px; }
+    #info-stats-grid .info-stat-value { margin-top: 0.35rem; font-size: 1.15rem; color: var(--primary-color); font-weight: 700; }
+
+    @media (max-width: 480px) {
+        #info-stats-grid { grid-template-columns: 1fr; }
+        #goal-graph { height: 220px; }
+        .projection-chart-wrap { height: 110px; }
+        #modal-projection-chart { height: 110px !important; }
+    }
+
+    #new-goal-form { grid-template-columns: 1fr; }
+    #new-goal-form h3 { grid-column: span 1; }
+    #new-goal-form label { grid-column: span 1; }
+
+    .modal-projection { grid-column: span 1; }
+    .projection-chart-wrap { height: 120px; }
+    #modal-projection-chart { width: 100% !important; height: 120px !important; }
+
+    /* Info modal layout tweaks */
+    .info-modal-body { display: block; }
+    .graph-area { width: 100%; }
+    #goal-graph { height: 220px; }
+
+    .info-modal-footer { padding-top: 1rem; }
+
+    /* Make buttons and controls slightly larger/tappable */
+    button { padding: 0.8rem; font-size: 1rem; }
+}
+
+/* Extra-small screens */
+@media (max-width: 480px) {
+    body { padding: 0.5rem; }
+    header h1 { font-size: 1.1rem; }
+    header p { font-size: 0.9rem; }
+    .modal-content { padding: 0.75rem; }
+    .progress-bar { height: 14px; }
+    #goal-graph { height: 200px; }
 }
 
 /* --- Card Footer & Actions --- */
