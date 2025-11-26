@@ -50,28 +50,97 @@ body {
     background-color: var(--bg-color);
     color: var(--font-color);
     margin: 0;
-    padding: 2rem;
-    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s, color 0.3s;
 }
 
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--bg-offset-color);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+}
+
+.sidebar-header {
+    margin-bottom: 2rem;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    color: var(--font-muted-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.nav-item.active, .nav-item:hover {
+    background-color: hsla(var(--primary-hue), 100%, 50%, 0.1);
+    color: var(--primary-color);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
 header {
-    text-align: center;
-    margin-bottom: 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
 }
 
 header h1 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0;
 }
 
 header p {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    color: var(--font-muted-color);
+    margin-top: 0.25rem;
+}
+
+.user-profile {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--font-muted-color);
 }
+
 
 #dashboard {
     max-width: 1200px;
@@ -486,12 +555,6 @@ button:active {
 }
 
 /* --- Theme Switcher --- */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 .theme-switcher {
     display: flex;
     align-items: center;

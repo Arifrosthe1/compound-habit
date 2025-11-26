@@ -664,6 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const init = () => {
         loadGoals();
         renderGoals();
+        feather.replace();
     };
 
     init();
