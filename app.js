@@ -17,6 +17,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const motivationalEl = document.getElementById('motivational');
     const projectionDaysEl = document.getElementById('projection-days');
     const projectionDateEl = document.getElementById('projection-date');
+    const themeToggle = document.getElementById('theme-toggle');
+    const summaryTotalGoalsEl = document.getElementById('summary-total-goals');
+    const summaryCompletedGoalsEl = document.getElementById('summary-completed-goals');
+    const summaryOverallProgressEl = document.getElementById('summary-overall-progress');
+
+    // --- Theme Management ---
+    const currentTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        if (themeToggle) themeToggle.checked = theme === 'dark';
+        localStorage.setItem('theme', theme);
+    };
+
+    if (currentTheme) {
+        applyTheme(currentTheme);
+    } else {
+        applyTheme(prefersDark ? 'dark' : 'light');
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('change', () => {
+            const newTheme = themeToggle.checked ? 'dark' : 'light';
+            applyTheme(newTheme);
+        });
+    }
 
     // --- State Management ---
     let goals = [];
@@ -28,7 +55,20 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     const loadGoals = () => {
         const goalsJSON = localStorage.getItem('compoundingHabits');
-        goals = goalsJSON ? JSON.parse(goalsJSON) : [];
+        if (!goalsJSON) {
+            goals = [];
+            return;
+        }
+        try {
+            goals = JSON.parse(goalsJSON) || [];
+        } catch (e) {
+            console.warn('Failed to parse compoundingHabits from localStorage, resetting. Error:', e);
+            // keep a backup of the corrupted value for debugging
+            try { localStorage.setItem('compoundingHabits_corrupted_backup', goalsJSON); } catch (ee) { /* ignore */ }
+            goals = [];
+            // clear the bad value to avoid repeated errors
+            try { localStorage.removeItem('compoundingHabits'); } catch (ee) { /* ignore */ }
+        }
     };
 
     /**
@@ -39,12 +79,50 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /**
+     * Renders the dashboard summary statistics.
+     */
+    const renderDashboardSummary = () => {
+        const totalGoals = goals.length;
+        const completedGoals = goals.filter(goal => {
+            if (goal.type === 'increase') return goal.currentValue >= goal.targetValue;
+            return goal.currentValue <= goal.targetValue;
+        }).length;
+
+        let overallProgress = 0;
+        if (goals.length > 0) {
+            const totalProgress = goals.reduce((acc, goal) => {
+                let progressPct = 0;
+                if (goal.type === 'increase') {
+                    const denom = goal.targetValue - goal.startValue;
+                    if (denom !== 0) progressPct = ((goal.currentValue - goal.startValue) / denom) * 100;
+                } else {
+                    const denom = goal.startValue - goal.targetValue;
+                    if (denom !== 0) progressPct = ((goal.startValue - goal.currentValue) / denom) * 100;
+                }
+                return acc + Math.max(0, Math.min(100, progressPct));
+            }, 0);
+            overallProgress = totalProgress / totalGoals;
+        }
+
+        summaryTotalGoalsEl.textContent = totalGoals;
+        summaryCompletedGoalsEl.textContent = completedGoals;
+        summaryOverallProgressEl.textContent = `${Math.round(overallProgress)}%`;
+    };
+
+    /**
      * Renders all goals to the DOM.
      */
     const renderGoals = () => {
         goalsContainer.innerHTML = ''; // Clear existing goals
+        renderDashboardSummary();
         if (goals.length === 0) {
-            goalsContainer.innerHTML = `<p>No goals yet. Click "Add New Goal" to start!</p>`;
+            goalsContainer.innerHTML = `
+                <div class="empty-state">
+                    <h3>No Goals Yet!</h3>
+                    <p>Click the "Add Goal" button to start your journey of compounding habits.</p>
+                </div>
+            `;
+            return;
         }
 
         goals.forEach(goal => {
@@ -102,6 +180,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const editButton = card.querySelector('.edit-button');
             const resetButton = card.querySelector('.reset-button');
             const deleteButton = card.querySelector('.delete-button');
+            const moreButton = card.querySelector('.more-button');
+            const dropdownContent = card.querySelector('.dropdown-content');
+
+            moreButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdownContent.classList.toggle('show');
+            });
 
             logButton.addEventListener('click', () => {
                 const value = parseFloat(logInput.value);
@@ -177,7 +262,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             goalsContainer.appendChild(card);
         });
+
+        // Initialize Feather Icons
+        feather.replace();
     };
+
+    // Close dropdowns when clicking outside
+    window.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown-content').forEach(content => {
+                content.classList.remove('show');
+            });
+        }
+        if (e.target === infoModal) { 
+            infoModal.style.display = 'none'; 
+            if (chartInstance) { 
+                chartInstance.destroy(); 
+                chartInstance = null; 
+            } 
+        }
+    });
 
     // Chart.js integration
     let chartInstance = null;

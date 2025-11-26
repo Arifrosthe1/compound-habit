@@ -1,25 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compounding Habits</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-        <h1>Compounding Habits</h1>
-        <p>Turn small daily changes into massive long-term results.</p>
+        <div class="header-content">
+            <h1>Compounding Habits</h1>
+            <p>Turn small daily changes into massive long-term results.</p>
+        </div>
+        <div class="theme-switcher">
+            <label for="theme-toggle">Theme</label>
+            <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox">
+            <label for="theme-toggle" class="theme-toggle-label"></label>
+        </div>
     </header>
 
     <main>
         <div id="dashboard">
-            <h2>Today's Focus</h2>
+            <div id="dashboard-summary">
+                <div class="summary-item">
+                    <span class="summary-value" id="summary-total-goals">0</span>
+                    <span class="summary-label">Total Goals</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-value" id="summary-completed-goals">0</span>
+                    <span class="summary-label">Completed</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-value" id="summary-overall-progress">0%</span>
+                    <span class="summary-label">Overall Progress</span>
+                </div>
+            </div>
             <div id="goals-container">
                 <!-- Goals will be dynamically inserted here by JavaScript -->
             </div>
-            <button id="add-goal-btn" class="add-button">+ Add New Goal</button>
+            <button id="add-goal-btn" class="add-button">Add Goal</button>
         </div>
     </main>
 
@@ -52,7 +76,7 @@
                 <input type="number" id="target-value" placeholder="e.g., 1800" required>
 
                 <label for="interest-rate">Daily "Interest Rate" (%)</label>
-                <input type="number" id="interest-rate" value="2" min="0.1" max="20" step="0.1" required>
+                <input type="number" id="interest-rate" value="2" step="0.1" required>
 
                 <!-- Live projection preview with mini chart -->
                 <div id="modal-projection" class="modal-projection">
@@ -92,16 +116,23 @@
                 <div class="progress-label"><span class="goal-progress">0</span>%</div>
             </div>
 
-            <div class="log-section">
-                <input type="number" class="log-input" placeholder="Log today's value">
-                <button class="log-button">Log</button>
-                <button class="apply-button">Apply Compound</button>
-                <button class="info-button">Info</button>
-            </div>
-            <div class="action-row">
-                <button class="edit-button">Edit</button>
-                <button class="reset-button">Reset</button>
-                <button class="delete-button">Delete</button>
+            <div class="card-footer">
+                <div class="log-section">
+                    <input type="number" class="log-input" placeholder="Log today's value">
+                    <button class="log-button">Log</button>
+                    <button class="apply-button">Apply</button>
+                </div>
+                <div class="action-menu">
+                    <button class="icon-button info-button"><i data-feather="info"></i></button>
+                    <div class="dropdown">
+                        <button class="icon-button more-button"><i data-feather="more-vertical"></i></button>
+                        <div class="dropdown-content">
+                            <button class="dropdown-item edit-button">Edit</button>
+                            <button class="dropdown-item reset-button">Reset</button>
+                            <button class="dropdown-item delete-button">Delete</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <p class="goal-streak"></p>
             <p class="goal-lastlogged"></p>
