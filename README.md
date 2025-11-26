@@ -63,10 +63,4 @@ Please be respectful and follow common open-source community standards. If you'd
 
 This project is licensed under the MIT License — see the `LICENSE` file for details.
 
----
 
-If you'd like, I can also:
-
-- Add a `.gitignore` and a `CONTRIBUTING.md` template.
-- Create a minimal GitHub Actions workflow to run a secret scan on pushed commits.
-- Prepare a release checklist for publishing this repository publicly.
