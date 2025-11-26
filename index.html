@@ -54,6 +54,19 @@
                 <label for="interest-rate">Daily "Interest Rate" (%)</label>
                 <input type="number" id="interest-rate" value="2" min="0.1" max="20" step="0.1" required>
 
+                <!-- Live projection preview with mini chart -->
+                <div id="modal-projection" class="modal-projection">
+                    <div class="projection-header"><strong>Projection</strong>
+                        <div class="projection-stats">
+                            <div id="projection-days">Estimated days to target: —</div>
+                            <div id="projection-date">Estimated reach date: —</div>
+                        </div>
+                    </div>
+                    <div class="projection-chart-wrap">
+                        <canvas id="modal-projection-chart" width="400" height="120"></canvas>
+                    </div>
+                </div>
+
                 <button type="submit">Start Goal</button>
             </form>
         </div>

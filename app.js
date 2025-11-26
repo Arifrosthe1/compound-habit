@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoProgressEl = document.getElementById('info-progress');
     const infoDaysleftEl = document.getElementById('info-daysleft');
     const motivationalEl = document.getElementById('motivational');
+    const projectionDaysEl = document.getElementById('projection-days');
+    const projectionDateEl = document.getElementById('projection-date');
 
     // --- State Management ---
     let goals = [];
@@ -57,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (goal.type === 'increase') {
                 currentTarget = goal.currentValue * (1 + rateDecimal);
             } else {
-                currentTarget = goal.currentValue * (1 - rateDecimal);
+                currentTarget = computeNextForDecrease(goal.currentValue, goal.startValue, goal.targetValue, rateDecimal, goal.rampExponent || 2);
             }
             // Cap at final target
             if (goal.type === 'increase' && currentTarget > goal.targetValue) currentTarget = goal.targetValue;
@@ -75,27 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isFinite(progressPct)) progressPct = 0;
             progressPct = Math.max(0, Math.min(100, progressPct));
 
-            // Estimate days remaining using compound math: target = current * (1+r)^days  => days = ln(target/current)/ln(1+r)
-            let daysRemaining = 'N/A';
-            try {
-                if (goal.currentValue === goal.targetValue) {
-                    daysRemaining = 0;
-                } else if (rateDecimal > 0) {
-                    if (goal.type === 'increase' && goal.targetValue > goal.currentValue) {
-                        const num = Math.log(goal.targetValue / goal.currentValue);
-                        const den = Math.log(1 + rateDecimal);
-                        const days = Math.ceil(num / den);
-                        daysRemaining = days > 0 ? days : 0;
-                    } else if (goal.type === 'decrease' && goal.targetValue < goal.currentValue) {
-                        const num = Math.log(goal.targetValue / goal.currentValue);
-                        const den = Math.log(1 - rateDecimal);
-                        const days = Math.ceil(num / den);
-                        daysRemaining = days > 0 ? days : 0;
-                    }
-                }
-            } catch (e) {
-                daysRemaining = 'N/A';
-            }
+            // Estimate days remaining (use simulation for decrease to match new logic)
+            let daysRemaining = estimateDaysToTargetSim(goal, 3650);
 
             card.querySelector('.goal-title').textContent = goal.name;
             card.querySelector('.goal-target').textContent = `Today's Target: ${parseFloat(currentTarget.toFixed(2))} ${goal.unit}`;
@@ -136,13 +119,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Apply compound immediately (simulate end-of-day compound)
             applyButton.addEventListener('click', () => {
                 const rate = rateDecimal;
-                if (goal.type === 'increase') {
-                    goal.currentValue = goal.currentValue * (1 + rate);
-                    if (goal.currentValue > goal.targetValue) goal.currentValue = goal.targetValue;
-                } else {
-                    goal.currentValue = goal.currentValue * (1 - rate);
-                    if (goal.currentValue < goal.targetValue) goal.currentValue = goal.targetValue;
-                }
+                    if (goal.type === 'increase') {
+                        goal.currentValue = goal.currentValue * (1 + rate);
+                        if (goal.currentValue > goal.targetValue) goal.currentValue = goal.targetValue;
+                    } else {
+                        // use the flipped/depth-aware decrease logic with per-goal exponent support
+                        goal.currentValue = computeNextForDecrease(goal.currentValue, goal.startValue, goal.targetValue, rate, goal.rampExponent || 2);
+                        if (goal.currentValue < goal.targetValue) goal.currentValue = goal.targetValue;
+                    }
                 const nowISO = new Date().toISOString();
                 goal.lastLoggedDate = nowISO;
                 // push to history
@@ -168,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('interest-rate').value = goal.interestRate;
                 // set editing id
                 if (editingIdInput) editingIdInput.value = goal.id;
+                updateModalProjection();
                 showModal();
             });
 
@@ -196,6 +181,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Chart.js integration
     let chartInstance = null;
+    let projectionChart = null;
+
+    // --- Compounding helpers ---
+    /**
+     * Compute next value for a decrease-type goal so that absolute step
+     * is smallest at the beginning and grows as the target is approached.
+     * It uses the total range (start - target) as a basis and scales the
+     * step by a factor that increases with normalized progress.
+     */
+    function computeNextForDecrease(current, start, target, rateDecimal, exponent = 2) {
+        const range = start - target;
+        if (!isFinite(range) || range <= 0 || rateDecimal <= 0) return target;
+
+        // normalized progress: 0 at start, 1 at target
+        let normalized = (start - current) / range;
+        normalized = Math.max(0, Math.min(1, normalized));
+
+        // factor ramps from 0.05 (very small) to 1.0 (full) as progress increases
+        // Use a power curve so acceleration is slow early and speeds up near the end.
+        // 'exponent' controls how sharply the factor accelerates (2 = quadratic, 3 = cubic, etc.).
+        const baseMin = 0.05;
+        const baseRange = 1 - baseMin;
+        const factor = baseMin + baseRange * Math.pow(normalized, exponent);
+
+        // base step uses the overall range so absolute steps are relative to full journey
+        const step = rateDecimal * range * factor;
+
+        let next = current - step;
+        if (next < target) next = target;
+        return next;
+    }
+
+    function estimateDaysToTargetSim(goal, maxDays = 10000) {
+        if (!goal || !isFinite(goal.startValue) || !isFinite(goal.currentValue) || !isFinite(goal.targetValue)) return 'N/A';
+        const rateDecimal = (goal.interestRate || 0) / 100;
+        let current = goal.currentValue;
+        let days = 0;
+        const max = Math.max(3650, maxDays);
+        if (goal.type === 'increase') {
+            // fallback to previous logarithmic estimate for increases
+            try {
+                if (current === goal.targetValue) return 0;
+                if (rateDecimal <= 0) return 'N/A';
+                if (goal.targetValue <= current) return 0;
+                const num = Math.log(goal.targetValue / current);
+                const den = Math.log(1 + rateDecimal);
+                const estimate = Math.ceil(num / den);
+                return estimate > 0 ? estimate : 0;
+            } catch (e) { return 'N/A'; }
+        } else {
+            // simulate using the new decrease logic
+            while (current > goal.targetValue && days < max) {
+                current = computeNextForDecrease(current, goal.startValue, goal.targetValue, rateDecimal, goal.rampExponent || 2);
+                days += 1;
+                if (current === goal.targetValue) break;
+            }
+            return days >= max ? 'N/A' : days;
+        }
+    }
 
     function openInfoModal(goal) {
         infoTitle.textContent = `${goal.name} — Progress`;
@@ -349,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 current = current * (1 + rate);
                 if (current >= goal.targetValue) { series.push({ date: nextDate.toISOString(), value: goal.targetValue }); break; }
             } else {
-                current = current * (1 - rate);
+                current = computeNextForDecrease(current, goal.startValue, goal.targetValue, rate, goal.rampExponent || 2);
                 if (current <= goal.targetValue) { series.push({ date: nextDate.toISOString(), value: goal.targetValue }); break; }
             }
             series.push({ date: nextDate.toISOString(), value: parseFloat(current) });
@@ -359,13 +403,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Modal Handling ---
     const showModal = () => modal.style.display = 'flex';
-    const hideModal = () => modal.style.display = 'none';
+    const hideModal = () => {
+        modal.style.display = 'none';
+        try { if (projectionChart) { projectionChart.destroy(); projectionChart = null; } } catch (e) { }
+    };
+
+    // Update live projection in the add/edit modal based on current form inputs
+    function updateModalProjection() {
+        const startInput = document.getElementById('start-value');
+        const targetInput = document.getElementById('target-value');
+        const rateInput = document.getElementById('interest-rate');
+        const typeInput = document.querySelector('input[name="goal-type"]:checked');
+
+        if (!startInput || !targetInput || !rateInput || !typeInput) return;
+
+        const start = parseFloat(startInput.value);
+        const target = parseFloat(targetInput.value);
+        const rate = parseFloat(rateInput.value);
+        const type = typeInput.value;
+
+        if (!isFinite(start) || !isFinite(target) || !isFinite(rate) || rate <= 0) {
+            if (projectionDaysEl) projectionDaysEl.textContent = 'Estimated days to target: —';
+            if (projectionDateEl) projectionDateEl.textContent = 'Estimated reach date: —';
+            return;
+        }
+
+        const tempGoal = {
+            startValue: start,
+            currentValue: start,
+            targetValue: target,
+            interestRate: rate,
+            type: type,
+            rampExponent: 2
+        };
+
+        const days = estimateDaysToTargetSim(tempGoal, 3650);
+        if (projectionDaysEl) projectionDaysEl.textContent = `Estimated days to target: ${days}`;
+        if (projectionDateEl) {
+            if (typeof days === 'number' && isFinite(days)) {
+                const d = new Date();
+                d.setDate(d.getDate() + days);
+                projectionDateEl.textContent = `Estimated reach date: ${d.toLocaleDateString()}`;
+            } else {
+                projectionDateEl.textContent = 'Estimated reach date: —';
+            }
+        }
+
+        // Build small expected series and render a sparkline chart in the modal
+        try {
+            const expected = buildExpectedSeriesWithDates(tempGoal, 90);
+            // include starting point as first label
+            const labels = [];
+            const data = [];
+            const startLabel = new Date().toLocaleDateString();
+            labels.push(startLabel);
+            data.push(start);
+            expected.forEach(p => { labels.push(new Date(p.date).toLocaleDateString()); data.push(p.value); });
+
+            // Destroy old projection chart
+            if (projectionChart) { projectionChart.destroy(); projectionChart = null; }
+            const canvas = document.getElementById('modal-projection-chart');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                projectionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Expected',
+                            data: data,
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0,123,255,0.12)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { display: false }, y: { display: true } }
+                    }
+                });
+                try { projectionChart.resize(); projectionChart.update(); } catch (e) {}
+            }
+        } catch (e) { /* ignore chart errors */ }
+    }
 
     // --- Event Listeners ---
     addGoalBtn.addEventListener('click', () => {
         // ensure form is cleared and editing id removed when creating a new goal
         if (editingIdInput) editingIdInput.value = '';
         newGoalForm.reset();
+        // update projection after reset
+        updateModalProjection();
         showModal();
     });
     closeModalBtn.addEventListener('click', hideModal);
@@ -374,6 +506,14 @@ document.addEventListener('DOMContentLoaded', () => {
             hideModal();
         }
     });
+
+    // Live projection listeners on modal inputs
+    const startInputEl = document.getElementById('start-value');
+    const targetInputEl = document.getElementById('target-value');
+    const rateInputEl = document.getElementById('interest-rate');
+    const typeRadios = Array.from(document.querySelectorAll('input[name="goal-type"]'));
+    [startInputEl, targetInputEl, rateInputEl].forEach(el => { if (el) el.addEventListener('input', updateModalProjection); });
+    typeRadios.forEach(r => r.addEventListener('change', updateModalProjection));
 
     newGoalForm.addEventListener('submit', (e) => {
         e.preventDefault();
