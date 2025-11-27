@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openInfoModal(goal) {
-            infoTitle.textContent = `${goal.name} — Progress`;
+            infoTitle.textContent = `${goal.name} - Progress`;
             if (infoSubtitle) infoSubtitle.textContent = `Your progress chart and detailed stats.`;
 
             // --- DOM element references ---
