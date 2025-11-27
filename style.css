@@ -813,8 +813,14 @@ button:active {
     }
 
     #new-goal-form { grid-template-columns: 1fr; }
-    #new-goal-form h3 { grid-column: span 1; }
-    #new-goal-form label { grid-column: span 1; }
+    #new-goal-form h3, #new-goal-form label, #new-goal-form .radio-group {
+        grid-column: span 1;
+    }
+    #new-goal-form .radio-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
 
     .modal-projection { grid-column: span 1; }
     .projection-chart-wrap { height: 120px; }
@@ -829,6 +835,46 @@ button:active {
 
     /* Make buttons and controls slightly larger/tappable */
     button { padding: 0.8rem; font-size: 1rem; }
+}
+/* --- Add Goal Modal Mobile UI Improvements --- */
+@media (max-width: 768px) {
+    .modal-overlay {
+        align-items: flex-start; /* Align modal to the top */
+    }
+
+    .modal-content.add-goal-modal {
+        width: 100%;
+        height: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+        background-color: var(--bg-color);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .add-goal-modal #new-goal-form {
+        padding: 1rem 0.5rem 8rem 0.5rem; /* Add padding at the bottom for the fixed button */
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    .add-goal-modal h3 {
+        position: sticky;
+        top: 0;
+        background: var(--bg-color);
+        padding: 1rem 0;
+        z-index: 10;
+    }
+
+    .add-goal-modal button[type="submit"] {
+        position: fixed;
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        width: calc(100% - 2rem);
+        z-index: 10;
+        box-shadow: 0 -4px 12px rgba(var(--shadow-color), 0.1);
+    }
 }
 
 /* Extra-small screens */
