@@ -237,8 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('interest-rate').value = goal.interestRate;
                 // set editing id
                 if (editingIdInput) editingIdInput.value = goal.id;
-                updateModalProjection();
+                // show modal first so the projection chart can initialize with a visible canvas
                 showModal();
+                setTimeout(() => updateModalProjection(), 60);
             });
 
             // Reset goal: restore start value and clear history
@@ -486,8 +487,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // allow layout to settle then force resize/update
+                // allow layout to settle then force resize/update (run twice to cover transition timing on mobile)
                 setTimeout(() => { try { chartInstance.resize(); chartInstance.update(); } catch (e) { /* ignore */ } }, 60);
+                setTimeout(() => { try { chartInstance.resize(); chartInstance.update(); } catch (e) { /* ignore */ } }, 300);
             } catch (e) {
                 console.warn('Failed to render info chart', e);
                 try { if (chartInstance) { chartInstance.destroy(); chartInstance = null; } } catch (ee) { }
@@ -621,6 +623,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
                 try { projectionChart.resize(); projectionChart.update(); } catch (e) {}
+                // extra delayed resize/update to handle mobile/modal transition timing
+                setTimeout(() => { try { projectionChart.resize(); projectionChart.update(); } catch (e) { /* ignore */ } }, 300);
             }
         } catch (e) { /* ignore chart errors */ }
     }
@@ -630,9 +634,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // ensure form is cleared and editing id removed when creating a new goal
         if (editingIdInput) editingIdInput.value = '';
         newGoalForm.reset();
-        // update projection after reset
-        updateModalProjection();
+        // show modal then update projection so Chart.js can measure canvas correctly
         showModal();
+        setTimeout(() => updateModalProjection(), 60);
     });
     closeModalBtn.addEventListener('click', hideModal);
     window.addEventListener('click', (e) => {

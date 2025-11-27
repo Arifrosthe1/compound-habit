@@ -775,6 +775,83 @@ button:active {
         flex-direction: column;
     }
 
+    /* Make Add/Edit modal slightly narrower than full-width on mobile for improved focus */
+    #add-goal-modal .modal-content {
+        width: calc(100% - 3rem);
+        max-width: 480px; /* cap width on small devices */
+        margin: 0 1rem;
+    }
+
+    /* Apply centered, breathable modal style for Add Goal on mobile (similar to Info modal) */
+    #add-goal-modal {
+        align-items: center; /* center vertically */
+        justify-content: center;
+    }
+    #add-goal-modal .modal-content.add-goal-modal {
+        width: clamp(320px, 90%, 520px);
+        max-width: 94%;
+        max-height: 78vh; /* keep it compact */
+        padding: 0.75rem 0.85rem;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+    }
+    /* Reduce header weight/size for mobile add modal */
+    #add-goal-modal .modal-content.add-goal-modal h3 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin: 0.75rem 0;
+    }
+    /* Make the form scroll independently inside the modal content */
+    #add-goal-modal #new-goal-form {
+        overflow-y: auto;
+        max-height: calc(78vh - 120px);
+        padding: 0.5rem 0.5rem 0.75rem 0.5rem;
+        display: block;
+    }
+    /* Slightly smaller inputs on mobile to balance the layout */
+    #add-goal-modal input[type="text"],
+    #add-goal-modal input[type="number"] {
+        padding: 0.6rem;
+        font-size: 0.95rem;
+    }
+    /* Compact submit button but keep it tappable */
+    #add-goal-modal button[type="submit"] {
+        position: static;
+        width: 100%;
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+    }
+
+    /* Center Info modal on small screens and make it breathing/responsive */
+    #info-modal {
+        align-items: center; /* override potential global top-alignment */
+        justify-content: center;
+    }
+    #info-modal .modal-content {
+        /* breathable width between small phones and larger devices */
+        width: clamp(320px, 88%, 520px);
+        max-width: 92%;
+        max-height: 75vh; /* reduce height to keep it compact */
+        padding: 0.5rem 0.75rem;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+    }
+
+    /* Reduce header font-size/weight and tighten spacing for mobile Info modal */
+    #info-modal .info-modal-header { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border-color); }
+    #info-modal .info-modal-header h3 { font-size: 1.15rem; font-weight: 600; margin: 0 0 0.15rem 0; }
+    #info-modal .info-modal-header p { font-size: 0.9rem; margin: 0; color: var(--font-muted-color); }
+
+    /* Make chart area smaller and more compact on mobile */
+    #info-modal .info-modal-body .graph-area { height: 200px; }
+    #info-modal #goal-graph { height: 100% !important; }
+
+    /* Reduce stat font sizes/weights for better balance and readability */
+    #info-stats-grid .info-stat-label { font-size: 0.85rem; }
+    #info-stats-grid .info-stat-value { font-size: 1.05rem; font-weight: 600; color: var(--primary-color); }
+
     /* Keep close button reachable on small screens */
     .modal-content > .close-btn {
         position: absolute;
@@ -795,21 +872,48 @@ button:active {
     #modal-projection-chart { width: 100% !important; height: 140px !important; }
 
     /* Info modal: sticky header and scrollable body to keep charts visible */
-    .info-modal-header { position: sticky; top: 0; z-index: 6; background: transparent; padding-bottom: 0.5rem; }
-    .info-modal-body { display: block; }
-    .info-modal-body .graph-area { width: 100%; margin-bottom: 1rem; }
-    #goal-graph { width: 100% !important; height: 260px; }
+    /* Scoped to the Info modal so desktop behavior remains unchanged */
+    #info-modal .modal-content { padding: 0; max-width: 520px; width: calc(100% - 1rem); border-radius: 12px; display: flex; flex-direction: column; }
+    #info-modal .info-modal-header { position: sticky; top: 0; z-index: 8; background: var(--bg-offset-color); padding: 1rem; border-bottom: 1px solid var(--border-color); }
+    #info-modal .info-modal-header h3 { margin-bottom: 0.25rem; }
+    #info-modal .info-modal-header p { margin: 0; }
+
+    /* Make the body scroll independently and reserve space for header/footer */
+    #info-modal .info-modal-body { padding: 0.75rem 1rem 1rem; overflow-y: auto; max-height: calc(85vh - 140px); }
+    #info-modal .info-modal-body { padding: 0.75rem 1rem 1rem; overflow-y: auto; max-height: calc(85vh - 140px); display: block; }
+    #info-modal .info-modal-body .graph-area { width: 100%; margin: 0 0 0.75rem 0; height: 260px; }
+    #info-modal .info-modal-body { flex: 1 1 auto; }
+    #info-modal #goal-graph { width: 100% !important; height: 100% !important; display: block; }
+
+    /* Footer pinned to bottom of modal, but not covering content (transparent gradient) */
+    #info-modal .info-modal-footer { position: sticky; bottom: 0; z-index: 9; background: linear-gradient(180deg, rgba(0,0,0,0.00), rgba(0,0,0,0.03)); padding: 0.75rem 1rem; border-top: 1px solid var(--border-color); }
 
     /* Info stats: grid of small stat cards for touch */
     #info-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; margin-top: 0.75rem; }
-    #info-stats-grid .info-stat-item { background: var(--bg-offset-color); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 8px; }
+    #info-stats-grid .info-stat-item { background: var(--bg-offset-color); border: 1px solid var(--border-color); padding: 0.9rem; border-radius: 8px; }
     #info-stats-grid .info-stat-value { margin-top: 0.35rem; font-size: 1.15rem; color: var(--primary-color); font-weight: 700; }
+    /* Legend and small layout tweaks for touch */
+    .graph-legend { display: flex; gap: 0.75rem; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .legend-item { font-size: 0.95rem; color: var(--font-muted-color); display: inline-flex; gap: 0.5rem; align-items: center; }
+    .legend-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; }
+    .legend-swatch.actual { background: #ff7f0e; }
+    .legend-swatch.expected { background: #4dabf7; }
 
     @media (max-width: 480px) {
         #info-stats-grid { grid-template-columns: 1fr; }
-        #goal-graph { height: 220px; }
+        #goal-graph { height: 180px; }
         .projection-chart-wrap { height: 110px; }
         #modal-projection-chart { height: 110px !important; }
+        /* make add-goal modal narrower on very small screens */
+        #add-goal-modal .modal-content { max-width: 380px; width: calc(100% - 2rem); }
+        /* Make info modal stats slightly larger and more readable on tiny screens */
+        #info-stats-grid .info-stat-item { padding: 1rem; }
+        #info-stats-grid .info-stat-label { font-size: 0.95rem; }
+        #info-stats-grid .info-stat-value { font-size: 1.15rem; font-weight: 600; }
+
+        /* Ensure Info modal remains centered on very small screens */
+        #info-modal { align-items: center; }
+        #info-modal .modal-content { width: clamp(300px, 94%, 420px); max-height: 72vh; }
     }
 
     #new-goal-form { grid-template-columns: 1fr; }
@@ -838,43 +942,60 @@ button:active {
 }
 /* --- Add Goal Modal Mobile UI Improvements --- */
 @media (max-width: 768px) {
+    /* Center the modal on small devices and make it compact (not full-screen) */
     .modal-overlay {
-        align-items: flex-start; /* Align modal to the top */
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
     }
 
     .modal-content.add-goal-modal {
-        width: 100%;
-        height: 100%;
-        max-height: 100vh;
-        border-radius: 0;
-        background-color: var(--bg-color);
+        width: clamp(320px, 92%, 520px);
+        max-width: 94%;
+        max-height: 80vh;
+        border-radius: 12px;
+        background-color: var(--bg-offset-color);
         display: flex;
         flex-direction: column;
+        padding: 0.75rem;
+        box-shadow: var(--shadow);
     }
 
-    .add-goal-modal #new-goal-form {
-        padding: 1rem 0.5rem 8rem 0.5rem; /* Add padding at the bottom for the fixed button */
+    /* Make the form scroll inside the modal; header should scroll naturally (not sticky) */
+    #add-goal-modal #new-goal-form {
+        padding: 0.5rem 0.5rem 0.75rem 0.5rem;
         overflow-y: auto;
-        flex-grow: 1;
+        flex: 1 1 auto;
+        display: block;
+        gap: 0.5rem;
     }
 
-    .add-goal-modal h3 {
-        position: sticky;
-        top: 0;
-        background: var(--bg-color);
-        padding: 1rem 0;
-        z-index: 10;
+    /* Header is part of the scrollable content (non-sticky) and centered */
+    #add-goal-modal h3 {
+        position: relative;
+        top: auto;
+        background: transparent;
+        padding: 0.5rem 0;
+        margin: 0 0 0.5rem 0;
+        text-align: center;
+        font-size: 1.15rem;
+        font-weight: 600;
     }
 
-    .add-goal-modal button[type="submit"] {
-        position: fixed;
-        bottom: 1rem;
-        left: 1rem;
-        right: 1rem;
-        width: calc(100% - 2rem);
-        z-index: 10;
-        box-shadow: 0 -4px 12px rgba(var(--shadow-color), 0.1);
+    /* Keep the submit button inside the modal flow (not fixed) so it appears below the form */
+    #add-goal-modal button[type="submit"] {
+        position: static;
+        margin-top: 0.5rem;
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 8px;
+        box-shadow: none;
     }
+
+    /* Inputs and labels: stacked full-width for clarity on small screens */
+    #add-goal-modal label { display: block; margin-bottom: 0.25rem; font-weight: 600; }
+    #add-goal-modal input[type="text"],
+    #add-goal-modal input[type="number"] { width: 100%; box-sizing: border-box; }
 }
 
 /* Extra-small screens */
